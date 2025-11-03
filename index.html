@@ -582,6 +582,190 @@
             border-radius: 5px;
             font-size: 14px;
         }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 20px;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            /* Hide interactive elements */
+            .controls,
+            .instructions,
+            .unit-list-section,
+            .export-buttons,
+            #saveIndicator,
+            .modal,
+            button {
+                display: none !important;
+            }
+
+            /* Header styling */
+            h1 {
+                font-size: 24pt;
+                margin-bottom: 10pt;
+                color: #000;
+                page-break-after: avoid;
+            }
+
+            .subtitle {
+                font-size: 11pt;
+                margin-bottom: 15pt;
+                color: #333;
+            }
+
+            /* Legend styling for print */
+            .legend {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-bottom: 20pt;
+                padding: 10pt;
+                background: #f8f8f8;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+                page-break-after: avoid;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 4pt 8pt;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                font-size: 9pt;
+            }
+
+            .legend-color {
+                width: 20px;
+                height: 20px;
+                border: 1.5px solid #000;
+                flex-shrink: 0;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            /* Grid container */
+            .grid-container {
+                background: white;
+                padding: 15pt;
+                border: 2px solid #333;
+                page-break-inside: avoid;
+                overflow: visible;
+            }
+
+            .grid {
+                display: grid;
+                gap: 4px;
+                margin: 0;
+            }
+
+            /* Grid cells for print */
+            .cell {
+                width: 70px;
+                height: 60px;
+                border: 1.5px solid #333;
+                border-radius: 4px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: white;
+                position: relative;
+                font-size: 9pt;
+                text-align: center;
+                padding: 3px;
+                page-break-inside: avoid;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .cell.filled {
+                font-weight: 600;
+                color: #000 !important;
+                text-shadow: none;
+                border: 2px solid #000;
+            }
+
+            /* Ensure background colors print */
+            .trailer-type-1room { 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .trailer-type-2room { 
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .trailer-type-3room { 
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .trailer-type-office { 
+                background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .trailer-type-wardrobe { 
+                background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .trailer-type-hair { 
+                background: linear-gradient(135deg, #30cfd0 0%, #330867 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .cell-unit-label {
+                font-size: 11pt;
+                font-weight: bold;
+                color: white !important;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            }
+
+            .cell-label {
+                font-size: 7pt;
+                color: rgba(0,0,0,0.6) !important;
+                margin-top: 2px;
+            }
+
+            .row-label {
+                position: absolute;
+                left: -35px;
+                font-weight: 600;
+                color: #000;
+                font-size: 9pt;
+            }
+
+            /* Add print header */
+            @page {
+                margin: 0.5in;
+                size: landscape;
+            }
+
+            /* Add date/time to print */
+            .container::before {
+                content: "Printed: " attr(data-print-date);
+                display: block;
+                text-align: right;
+                font-size: 9pt;
+                color: #666;
+                margin-bottom: 10pt;
+            }
+        }
     </style>
 </head>
 <body>
@@ -667,7 +851,7 @@
 
         <div class="export-buttons">
             <button onclick="saveLayout()">💾 Download Layout File</button>
-            <button onclick="window.print()">🖨️ Print Layout</button>
+            <button onclick="printLayout()">🖨️ Print Layout</button>
         </div>
         
         <div id="saveIndicator" style="position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 10px 20px; border-radius: 5px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: 600;">
@@ -1054,6 +1238,23 @@
             URL.revokeObjectURL(url);
             
             alert('Layout saved! You can reload this file later.');
+        }
+
+        function printLayout() {
+            // Add current date/time to container
+            const container = document.querySelector('.container');
+            const now = new Date();
+            const dateStr = now.toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            container.setAttribute('data-print-date', dateStr);
+            
+            // Trigger print
+            window.print();
         }
 
         // Auto-save to browser storage
