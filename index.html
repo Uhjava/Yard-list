@@ -467,9 +467,16 @@
         }
 
         .cell-unit-label {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        @media (min-width: 768px) {
+            .cell-unit-label {
+                font-size: 14px;
+            }
         }
 
         .draggable-units {
@@ -712,14 +719,17 @@
                 'GST 02-07', 'GST 02-08', 'GST 02-09', 'GST 02-10', 'GST 02-11', 'GST 02-12',
                 'GST 02-13', 'GST 02-14', 'GST 02-15', 'GST 02-16', 'GST 02-17', 'GST 02-18',
                 'GST 02-19', 'GST 02-20', 'GST 02-21', 'GST 02-22', 'GST 02-23', 'GST 02-24',
-                'GST 02-25', 'GST 02-26', 'GST 02-27', 'GST 02-28', 'GST 02-29'
+                'GST 02-25', 'GST 02-26', 'GST 02-27', 'GST 02-28', 'GST 02-29', 'GST 02-30',
+                'GST 02-31', 'GST 02-32', 'GST 02-33', 'GST 02-34', 'GST 02-35', 'GST 02-36'
             ],
             '3room': [
                 'GST 03-01', 'GST 03-02', 'GST 03-03', 'GST 03-04', 'GST 03-05', 'GST 03-06',
                 'GST 03-07', 'GST 03-08', 'GST 03-09', 'GST 03-10', 'GST 03-11', 'GST 03-12',
                 'GST 03-13', 'GST 03-14', 'GST 03-15', 'GST 03-16', 'GST 03-17', 'GST 03-18',
                 'GST 03-19', 'GST 03-20', 'GST 03-21', 'GST 03-22', 'GST 03-23', 'GST 03-24',
-                'GST 03-25', 'GST 03-26', 'GST 03-27', 'GST 03-28', 'GST 03-29',
+                'GST 03-25', 'GST 03-26', 'GST 03-27', 'GST 03-28', 'GST 03-29', 'GST 03-30',
+                'GST 03-31', 'GST 03-32', 'GST 03-33', 'GST 03-34', 'GST 03-35', 'GST 03-36',
+                'GST 03-37', 'GST 03-38', 'GST 03-39',
                 'POP'
             ],
             'hair': [
@@ -868,8 +878,13 @@
                     
                     if (gridData[cellId]) {
                         cell.classList.add('filled', `trailer-type-${gridData[cellId].type}`);
-                        const unitLabel = gridData[cellId].unit ? `<div class="cell-unit-label">${gridData[cellId].unit}</div>` : '';
-                        cell.innerHTML = `${unitLabel}<div>${trailerNames[gridData[cellId].type]}</div><div class="cell-label">Row ${r + 1}, Col ${c + 1}</div>`;
+                        if (gridData[cellId].unit) {
+                            // Show only unit number if assigned
+                            cell.innerHTML = `<div class="cell-unit-label">${gridData[cellId].unit}</div><div class="cell-label">Row ${r + 1}, Col ${c + 1}</div>`;
+                        } else {
+                            // Show trailer type if no unit assigned
+                            cell.innerHTML = `<div>${trailerNames[gridData[cellId].type]}</div><div class="cell-label">Row ${r + 1}, Col ${c + 1}</div>`;
+                        }
                     } else {
                         cell.innerHTML = `<div style="color: #adb5bd;">Empty</div><div class="cell-label">R${r + 1} C${c + 1}</div>`;
                     }
