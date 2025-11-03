@@ -662,20 +662,16 @@
                 border: 1.5px solid #333;
                 page-break-inside: avoid;
                 overflow: visible;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
 
             .grid {
                 display: grid;
                 gap: 2px;
-                margin: 0;
-                transform-origin: top left;
-            }
-
-            /* Dynamically scale grid based on number of columns */
-            @supports (zoom: 1) {
-                .grid {
-                    zoom: 0.85;
-                }
+                margin: 0 auto;
+                width: fit-content;
             }
 
             /* Grid cells for print - smaller and more compact */
@@ -696,13 +692,14 @@
                 page-break-inside: avoid;
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
+                box-sizing: border-box;
             }
 
             .cell.filled {
-                font-weight: 600;
+                font-weight: 700;
                 color: #000 !important;
                 text-shadow: none;
-                border: 1.5px solid #000;
+                border: 2px solid #000;
             }
 
             /* Ensure background colors print */
@@ -773,17 +770,6 @@
                 font-size: 8pt;
                 color: #666;
                 margin-bottom: 5pt;
-            }
-
-            /* Scale down for larger grids */
-            @media print and (min-width: 10in) {
-                .grid {
-                    zoom: 0.75;
-                }
-                .cell {
-                    width: 50px;
-                    height: 45px;
-                }
             }
         }
     </style>
@@ -1273,8 +1259,48 @@
             });
             container.setAttribute('data-print-date', dateStr);
             
-            // Trigger print
-            window.print();
+            // Calculate optimal cell size for print
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+            
+            // Available print space (landscape letter: 11" x 8.5" minus margins)
+            const availableWidth = 10.2 * 72; // ~735 points
+            const availableHeight = 7.7 * 72; // ~555 points (leaving space for header/legend)
+            
+            // Calculate max cell size that fits
+            const maxCellWidth = (availableWidth / cols) - 3; // -3 for gaps
+            const maxCellHeight = (availableHeight / rows) - 3;
+            const cellSize = Math.min(maxCellWidth, maxCellHeight, 60); // Cap at 60px
+            
+            // Apply dynamic sizing
+            const style = document.createElement('style');
+            style.id = 'dynamic-print-style';
+            style.textContent = `
+                @media print {
+                    .cell {
+                        width: ${cellSize}px !important;
+                        height: ${cellSize}px !important;
+                        font-size: ${Math.max(7, cellSize / 7)}pt !important;
+                    }
+                    .cell-unit-label {
+                        font-size: ${Math.max(8, cellSize / 6)}pt !important;
+                    }
+                    .grid {
+                        gap: ${Math.max(1, cellSize / 20)}px !important;
+                    }
+                }
+            `;
+            
+            // Remove old style if exists
+            const oldStyle = document.getElementById('dynamic-print-style');
+            if (oldStyle) oldStyle.remove();
+            
+            document.head.appendChild(style);
+            
+            // Small delay to ensure styles are applied
+            setTimeout(() => {
+                window.print();
+            }, 100);
         }
 
         // Auto-save to browser storage
