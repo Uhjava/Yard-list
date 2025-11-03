@@ -621,16 +621,16 @@
 
             /* Header styling */
             h1 {
-                font-size: 20pt !important;
-                margin-bottom: 8pt !important;
+                font-size: 16pt !important;
+                margin-bottom: 4pt !important;
                 color: #000 !important;
                 page-break-after: avoid !important;
                 text-align: center !important;
             }
 
             .subtitle {
-                font-size: 10pt !important;
-                margin-bottom: 10pt !important;
+                font-size: 8pt !important;
+                margin-bottom: 6pt !important;
                 color: #333 !important;
                 text-align: center !important;
             }
@@ -638,10 +638,10 @@
             /* Legend styling for print */
             .legend {
                 display: flex !important;
-                gap: 8px !important;
+                gap: 6px !important;
                 flex-wrap: wrap !important;
-                margin-bottom: 12pt !important;
-                padding: 8pt !important;
+                margin-bottom: 8pt !important;
+                padding: 6pt !important;
                 background: #f8f8f8 !important;
                 border: 1px solid #333 !important;
                 page-break-inside: avoid !important;
@@ -652,18 +652,18 @@
             .legend-item {
                 display: flex !important;
                 align-items: center !important;
-                gap: 5px !important;
-                padding: 4pt 8pt !important;
+                gap: 4px !important;
+                padding: 3pt 6pt !important;
                 background: white !important;
                 border: 1px solid #666 !important;
-                border-radius: 3px !important;
-                font-size: 9pt !important;
+                border-radius: 2px !important;
+                font-size: 7pt !important;
             }
 
             .legend-color {
-                width: 18px !important;
-                height: 18px !important;
-                border: 2px solid #000 !important;
+                width: 14px !important;
+                height: 14px !important;
+                border: 1.5px solid #000 !important;
                 flex-shrink: 0 !important;
             }
 
@@ -1264,32 +1264,64 @@
             const cols = parseInt(document.getElementById('cols').value);
             
             // Available print space (landscape letter: 11" x 8.5" minus margins)
-            // 11" - 0.8" margins = 10.2" = ~735 points
-            // 8.5" - 0.8" margins = 7.7" = ~555 points
-            const availableWidth = 10.2 * 72; // ~735 points
-            const availableHeight = 7.2 * 72; // ~518 points (leaving more space for header/legend)
+            const pageWidth = 11 * 72; // 792 points
+            const pageHeight = 8.5 * 72; // 612 points
+            const margin = 0.35 * 72; // ~25 points per side (smaller margins)
             
-            // Account for row labels (30px on left)
-            const rowLabelSpace = 30;
-            const usableWidth = availableWidth - rowLabelSpace;
+            const availableWidth = pageWidth - (margin * 2); // ~742 points
+            const availableHeight = pageHeight - (margin * 2); // ~562 points
+            
+            // Reserve space for header and legend - MINIMIZED
+            // Header (title + subtitle): ~35pt
+            // Legend: ~35pt
+            // Grid container padding and borders: ~20pt
+            // Total overhead: ~90pt
+            const headerSpace = 90;
+            const usableHeight = availableHeight - headerSpace; // ~472 points
+            
+            // Account for row labels and minimal grid padding
+            const rowLabelSpace = 32;
+            const gridPadding = 20;
+            const usableWidth = availableWidth - rowLabelSpace - gridPadding; // ~690 points
             
             // Calculate cell size based on grid dimensions
-            const gapSize = 2;
-            const maxCellWidth = (usableWidth - (gapSize * (cols - 1))) / cols;
-            const maxCellHeight = (availableHeight - (gapSize * (rows - 1))) / rows;
+            const gapSize = 3;
+            const totalGapWidth = gapSize * (cols - 1);
+            const totalGapHeight = gapSize * (rows - 1);
+            
+            const maxCellWidth = (usableWidth - totalGapWidth) / cols;
+            const maxCellHeight = (usableHeight - totalGapHeight) / rows;
             
             // Use the smaller dimension to ensure square cells that fit
             let cellSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
             
-            // Set reasonable min/max bounds
-            cellSize = Math.max(25, Math.min(cellSize, 70));
+            // Set reasonable bounds - INCREASED MINIMUM
+            cellSize = Math.max(35, Math.min(cellSize, 80));
             
-            // Calculate font sizes proportionally
-            const unitFontSize = Math.max(7, Math.floor(cellSize / 5.5));
-            const labelFontSize = Math.max(5, Math.floor(cellSize / 9));
-            const rowLabelFontSize = Math.max(7, Math.floor(cellSize / 6));
+            // Calculate if this will actually fit
+            const totalGridWidth = (cellSize * cols) + totalGapWidth + rowLabelSpace + gridPadding;
+            const totalGridHeight = (cellSize * rows) + totalGapHeight + headerSpace;
             
-            console.log(`Grid: ${rows}×${cols}, Cell size: ${cellSize}px, Unit font: ${unitFontSize}pt`);
+            console.log('Print Layout Calculation:');
+            console.log(`Grid: ${rows} rows × ${cols} columns`);
+            console.log(`Cell size: ${cellSize}px`);
+            console.log(`Total grid width needed: ${totalGridWidth}px / Available: ${availableWidth}px`);
+            console.log(`Total height needed: ${totalGridHeight}px / Available: ${availableHeight}px`);
+            
+            // If it won't fit, reduce cell size further
+            if (totalGridWidth > availableWidth || totalGridHeight > availableHeight) {
+                const widthRatio = availableWidth / totalGridWidth;
+                const heightRatio = availableHeight / totalGridHeight;
+                const scaleFactor = Math.min(widthRatio, heightRatio) * 0.95; // 95% for safety margin
+                cellSize = Math.floor(cellSize * scaleFactor);
+                cellSize = Math.max(35, cellSize); // Don't go below 35px
+                console.log(`Scaled down to: ${cellSize}px (scale factor: ${scaleFactor.toFixed(2)})`);
+            }
+            
+            // Calculate font sizes proportionally - INCREASED
+            const unitFontSize = Math.max(9, Math.floor(cellSize / 3.5));
+            const labelFontSize = Math.max(6, Math.floor(cellSize / 7));
+            const rowLabelFontSize = Math.max(8, Math.floor(cellSize / 5));
             
             // Apply dynamic sizing
             const style = document.createElement('style');
@@ -1302,17 +1334,33 @@
                     }
                     .cell-unit-label {
                         font-size: ${unitFontSize}pt !important;
-                        padding: ${Math.max(1, cellSize / 20)}px ${Math.max(2, cellSize / 15)}px !important;
+                        padding: ${Math.max(2, cellSize / 20)}px ${Math.max(3, cellSize / 15)}px !important;
+                        font-weight: 900 !important;
                     }
                     .cell-label {
                         font-size: ${labelFontSize}pt !important;
                     }
                     .row-label {
                         font-size: ${rowLabelFontSize}pt !important;
-                        left: -${Math.min(30, cellSize / 2)}px !important;
+                        left: -${Math.min(30, cellSize / 1.5)}px !important;
                     }
                     .grid {
                         gap: ${gapSize}px !important;
+                    }
+                    .container {
+                        padding: 10px !important;
+                    }
+                    .legend {
+                        margin-bottom: 6pt !important;
+                        padding: 5pt !important;
+                    }
+                    h1 {
+                        font-size: 14pt !important;
+                        margin-bottom: 3pt !important;
+                    }
+                    .subtitle {
+                        font-size: 7pt !important;
+                        margin-bottom: 4pt !important;
                     }
                 }
             `;
