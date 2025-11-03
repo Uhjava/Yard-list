@@ -1264,13 +1264,32 @@
             const cols = parseInt(document.getElementById('cols').value);
             
             // Available print space (landscape letter: 11" x 8.5" minus margins)
+            // 11" - 0.8" margins = 10.2" = ~735 points
+            // 8.5" - 0.8" margins = 7.7" = ~555 points
             const availableWidth = 10.2 * 72; // ~735 points
-            const availableHeight = 7.7 * 72; // ~555 points (leaving space for header/legend)
+            const availableHeight = 7.2 * 72; // ~518 points (leaving more space for header/legend)
             
-            // Calculate max cell size that fits
-            const maxCellWidth = (availableWidth / cols) - 3; // -3 for gaps
-            const maxCellHeight = (availableHeight / rows) - 3;
-            const cellSize = Math.min(maxCellWidth, maxCellHeight, 60); // Cap at 60px
+            // Account for row labels (30px on left)
+            const rowLabelSpace = 30;
+            const usableWidth = availableWidth - rowLabelSpace;
+            
+            // Calculate cell size based on grid dimensions
+            const gapSize = 2;
+            const maxCellWidth = (usableWidth - (gapSize * (cols - 1))) / cols;
+            const maxCellHeight = (availableHeight - (gapSize * (rows - 1))) / rows;
+            
+            // Use the smaller dimension to ensure square cells that fit
+            let cellSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
+            
+            // Set reasonable min/max bounds
+            cellSize = Math.max(25, Math.min(cellSize, 70));
+            
+            // Calculate font sizes proportionally
+            const unitFontSize = Math.max(7, Math.floor(cellSize / 5.5));
+            const labelFontSize = Math.max(5, Math.floor(cellSize / 9));
+            const rowLabelFontSize = Math.max(7, Math.floor(cellSize / 6));
+            
+            console.log(`Grid: ${rows}×${cols}, Cell size: ${cellSize}px, Unit font: ${unitFontSize}pt`);
             
             // Apply dynamic sizing
             const style = document.createElement('style');
@@ -1280,13 +1299,20 @@
                     .cell {
                         width: ${cellSize}px !important;
                         height: ${cellSize}px !important;
-                        font-size: ${Math.max(7, cellSize / 7)}pt !important;
                     }
                     .cell-unit-label {
-                        font-size: ${Math.max(8, cellSize / 6)}pt !important;
+                        font-size: ${unitFontSize}pt !important;
+                        padding: ${Math.max(1, cellSize / 20)}px ${Math.max(2, cellSize / 15)}px !important;
+                    }
+                    .cell-label {
+                        font-size: ${labelFontSize}pt !important;
+                    }
+                    .row-label {
+                        font-size: ${rowLabelFontSize}pt !important;
+                        left: -${Math.min(30, cellSize / 2)}px !important;
                     }
                     .grid {
-                        gap: ${Math.max(1, cellSize / 20)}px !important;
+                        gap: ${gapSize}px !important;
                     }
                 }
             `;
