@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trailer Yard Layout Manager</title>
+    <title>Greenlite Trailer Yard Layout Manager</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23667eea' width='100' height='100' rx='15'/><text y='75' font-size='70' fill='white' font-family='Arial, sans-serif'>🚛</text></svg>">
     <style>
         * {
@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a4d2e;
             padding: 10px;
             min-height: 100vh;
         }
@@ -39,9 +39,10 @@
 
         h1 {
             text-align: center;
-            color: #333;
+            color: #1a4d2e;
             margin-bottom: 10px;
             font-size: 1.5em;
+            font-weight: 700;
         }
 
         @media (min-width: 768px) {
@@ -105,7 +106,7 @@
 
         button {
             padding: 12px 20px;
-            background: #667eea;
+            background: #2d7a4e;
             color: white;
             border: none;
             border-radius: 5px;
@@ -125,9 +126,9 @@
         }
 
         button:hover {
-            background: #5568d3;
+            background: #1a4d2e;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(45, 122, 78, 0.4);
         }
 
         .legend {
@@ -367,11 +368,11 @@
 
         .export-buttons button {
             flex: 1;
-            background: #28a745;
+            background: #2d7a4e;
         }
 
         .export-buttons button:hover {
-            background: #218838;
+            background: #1a4d2e;
         }
 
         .row-label {
@@ -492,7 +493,7 @@
         }
 
         .unit-bubble {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2d7a4e;
             color: white;
             padding: 12px 16px;
             border-radius: 20px;
@@ -521,7 +522,8 @@
         @media (min-width: 1024px) {
             .unit-bubble:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 5px 15px rgba(45, 122, 78, 0.4);
+                background: #1a4d2e;
             }
         }
 
@@ -776,8 +778,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚛 Trailer Yard Layout Manager</h1>
-        <p class="subtitle">Click any cell to assign a trailer type</p>
+        <h1>🚛 Greenlite Trailer Yard Layout Manager</h1>
+        <p class="subtitle">Organize your production trailers efficiently</p>
 
         <div class="instructions">
             <h3>📋 How to Use:</h3>
@@ -860,7 +862,7 @@
             <button onclick="printLayout()">🖨️ Print Layout</button>
         </div>
         
-        <div id="saveIndicator" style="position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 10px 20px; border-radius: 5px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: 600;">
+        <div id="saveIndicator" style="position: fixed; bottom: 20px; right: 20px; background: #2d7a4e; color: white; padding: 10px 20px; border-radius: 5px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: 600;">
             ✓ Auto-saved
         </div>
     </div>
@@ -1259,120 +1261,136 @@
             });
             container.setAttribute('data-print-date', dateStr);
             
-            // Calculate optimal cell size for print
+            // Get grid dimensions
             const rows = parseInt(document.getElementById('rows').value);
             const cols = parseInt(document.getElementById('cols').value);
             
-            // Available print space (landscape letter: 11" x 8.5" minus margins)
-            const pageWidth = 11 * 72; // 792 points
-            const pageHeight = 8.5 * 72; // 612 points
-            const margin = 0.35 * 72; // ~25 points per side (smaller margins)
+            // INCREASED base cell size to fill more of the page
+            let cellSize = 85; // Reduced from 95 to fit on page
             
-            const availableWidth = pageWidth - (margin * 2); // ~742 points
-            const availableHeight = pageHeight - (margin * 2); // ~562 points
-            
-            // Reserve space for header and legend - MINIMIZED
-            // Header (title + subtitle): ~35pt
-            // Legend: ~35pt
-            // Grid container padding and borders: ~20pt
-            // Total overhead: ~90pt
-            const headerSpace = 90;
-            const usableHeight = availableHeight - headerSpace; // ~472 points
-            
-            // Account for row labels and minimal grid padding
-            const rowLabelSpace = 32;
-            const gridPadding = 20;
-            const usableWidth = availableWidth - rowLabelSpace - gridPadding; // ~690 points
-            
-            // Calculate cell size based on grid dimensions
-            const gapSize = 3;
-            const totalGapWidth = gapSize * (cols - 1);
-            const totalGapHeight = gapSize * (rows - 1);
-            
-            const maxCellWidth = (usableWidth - totalGapWidth) / cols;
-            const maxCellHeight = (usableHeight - totalGapHeight) / rows;
-            
-            // Use the smaller dimension to ensure square cells that fit
-            let cellSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
-            
-            // Set reasonable bounds - INCREASED MINIMUM
-            cellSize = Math.max(35, Math.min(cellSize, 80));
-            
-            // Calculate if this will actually fit
-            const totalGridWidth = (cellSize * cols) + totalGapWidth + rowLabelSpace + gridPadding;
-            const totalGridHeight = (cellSize * rows) + totalGapHeight + headerSpace;
-            
-            console.log('Print Layout Calculation:');
-            console.log(`Grid: ${rows} rows × ${cols} columns`);
-            console.log(`Cell size: ${cellSize}px`);
-            console.log(`Total grid width needed: ${totalGridWidth}px / Available: ${availableWidth}px`);
-            console.log(`Total height needed: ${totalGridHeight}px / Available: ${availableHeight}px`);
-            
-            // If it won't fit, reduce cell size further
-            if (totalGridWidth > availableWidth || totalGridHeight > availableHeight) {
-                const widthRatio = availableWidth / totalGridWidth;
-                const heightRatio = availableHeight / totalGridHeight;
-                const scaleFactor = Math.min(widthRatio, heightRatio) * 0.95; // 95% for safety margin
-                cellSize = Math.floor(cellSize * scaleFactor);
-                cellSize = Math.max(35, cellSize); // Don't go below 35px
-                console.log(`Scaled down to: ${cellSize}px (scale factor: ${scaleFactor.toFixed(2)})`);
+            // Adjust for very wide grids
+            if (cols > 12) {
+                cellSize = 72; // Reduced from 80
+            }
+            if (cols > 16) {
+                cellSize = 65; // Reduced from 70
             }
             
-            // Calculate font sizes proportionally - INCREASED
-            const unitFontSize = Math.max(9, Math.floor(cellSize / 3.5));
-            const labelFontSize = Math.max(6, Math.floor(cellSize / 7));
-            const rowLabelFontSize = Math.max(8, Math.floor(cellSize / 5));
+            // Font sizes
+            const unitFontSize = Math.floor(cellSize / 3.5); // Slightly bigger
+            const labelFontSize = Math.floor(cellSize / 12); // Smaller labels
+            const rowLabelFontSize = Math.floor(cellSize / 5);
             
-            // Apply dynamic sizing
+            console.log('=== Print Layout ===');
+            console.log(`Grid: ${rows} rows × ${cols} columns`);
+            console.log(`Cell size: ${cellSize}px (maximized for page fill)`);
+            console.log(`Unit font: ${unitFontSize}pt`);
+            console.log(`Gap: 15px`);
+            console.log('');
+            console.log('IMPORTANT: In the print dialog, enable "Fit to page" or adjust scale to 85-95%');
+            
+            // Apply styles
             const style = document.createElement('style');
             style.id = 'dynamic-print-style';
             style.textContent = `
                 @media print {
+                    @page {
+                        margin: 0.25in !important;
+                        size: landscape !important;
+                    }
+                    
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    
+                    body {
+                        transform-origin: top left;
+                    }
+                    
                     .cell {
                         width: ${cellSize}px !important;
                         height: ${cellSize}px !important;
+                        border: 4px solid #000 !important;
                     }
+                    
+                    /* Hide empty cell text for cleaner look */
+                    .cell:not(.filled) > div:first-child {
+                        display: none !important;
+                    }
+                    
                     .cell-unit-label {
                         font-size: ${unitFontSize}pt !important;
-                        padding: ${Math.max(2, cellSize / 20)}px ${Math.max(3, cellSize / 15)}px !important;
+                        padding: 5px 8px !important;
                         font-weight: 900 !important;
+                        background: rgba(255,255,255,0.95) !important;
+                        border-radius: 4px !important;
                     }
+                    
                     .cell-label {
                         font-size: ${labelFontSize}pt !important;
+                        font-weight: 500 !important;
+                        opacity: 0.7 !important;
                     }
+                    
                     .row-label {
                         font-size: ${rowLabelFontSize}pt !important;
-                        left: -${Math.min(30, cellSize / 1.5)}px !important;
+                        left: -${cellSize * 0.4}px !important;
+                        font-weight: 700 !important;
                     }
+                    
                     .grid {
-                        gap: ${gapSize}px !important;
+                        gap: 15px !important;
                     }
+                    
+                    .grid-container {
+                        padding: 10pt !important;
+                    }
+                    
                     .container {
-                        padding: 10px !important;
+                        padding: 12px !important;
                     }
+                    
+                    h1 {
+                        font-size: 16pt !important;
+                        margin-bottom: 3pt !important;
+                    }
+                    
+                    .subtitle {
+                        font-size: 8pt !important;
+                        margin-bottom: 4pt !important;
+                    }
+                    
                     .legend {
                         margin-bottom: 6pt !important;
                         padding: 5pt !important;
                     }
-                    h1 {
-                        font-size: 14pt !important;
-                        margin-bottom: 3pt !important;
+                    
+                    .legend-item {
+                        padding: 3pt 6pt !important;
+                        font-size: 8pt !important;
                     }
-                    .subtitle {
+                    
+                    .legend-color {
+                        width: 14px !important;
+                        height: 14px !important;
+                        border: 2px solid #000 !important;
+                    }
+                    
+                    .container::before {
                         font-size: 7pt !important;
-                        margin-bottom: 4pt !important;
                     }
                 }
             `;
             
-            // Remove old style if exists
             const oldStyle = document.getElementById('dynamic-print-style');
             if (oldStyle) oldStyle.remove();
             
             document.head.appendChild(style);
             
-            // Small delay to ensure styles are applied
+            // Show a helpful alert
             setTimeout(() => {
+                alert('Print Tip: In the print dialog, use "Scale: Fit to page" or set scale to 85-95% for best results.');
                 window.print();
             }, 100);
         }
