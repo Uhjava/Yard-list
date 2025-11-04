@@ -480,6 +480,52 @@
             }
         }
 
+        .clean-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            z-index: 5;
+        }
+
+        .clean-badge:hover {
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .clean-badge.clean {
+            background: #28a745;
+            color: white;
+        }
+
+        .clean-badge.dirty {
+            background: #ff9800;
+            color: white;
+        }
+
+        .clean-badge.unknown {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        @media (max-width: 767px) {
+            .clean-badge {
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+            }
+        }
+
         .draggable-units {
             display: flex;
             flex-wrap: wrap;
@@ -787,6 +833,7 @@
                 <li>Set your yard dimensions (rows and columns)</li>
                 <li>Select a trailer type from the dropdown</li>
                 <li>Drag unit bubbles onto grid cells</li>
+                <li><strong>Click the badge (?, ✓, or ●) to mark clean status</strong></li>
                 <li><strong>Right-click or Shift+Click</strong> on any filled cell to clear it</li>
                 <li>Save or print your layout when done</li>
             </ul>
@@ -1070,15 +1117,41 @@
                     
                     if (gridData[cellId]) {
                         cell.classList.add('filled', `trailer-type-${gridData[cellId].type}`);
+                        
+                        // Determine clean status
+                        const cleanStatus = gridData[cellId].cleanStatus || 'unknown';
+                        let badgeIcon = '?';
+                        let badgeClass = 'unknown';
+                        
+                        if (cleanStatus === 'clean') {
+                            badgeIcon = '✓';
+                            badgeClass = 'clean';
+                        } else if (cleanStatus === 'dirty') {
+                            badgeIcon = '●';
+                            badgeClass = 'dirty';
+                        }
+                        
+                        // Create clean badge
+                        const badge = document.createElement('div');
+                        badge.className = `clean-badge ${badgeClass}`;
+                        badge.innerHTML = badgeIcon;
+                        badge.title = cleanStatus === 'clean' ? 'Clean' : cleanStatus === 'dirty' ? 'Needs Cleaning' : 'Status Unknown';
+                        badge.onclick = (e) => {
+                            e.stopPropagation();
+                            toggleCleanStatus(r, c);
+                        };
+                        
                         if (gridData[cellId].unit) {
                             // Show only unit number if assigned
-                            cell.innerHTML = `<div class="cell-unit-label">${gridData[cellId].unit}</div><div class="cell-label">Row ${r + 1}, Col ${c + 1}</div>`;
+                            cell.innerHTML = `<div class="cell-unit-label">${gridData[cellId].unit}</div>`;
                         } else {
                             // Show trailer type if no unit assigned
-                            cell.innerHTML = `<div>${trailerNames[gridData[cellId].type]}</div><div class="cell-label">Row ${r + 1}, Col ${c + 1}</div>`;
+                            cell.innerHTML = `<div>${trailerNames[gridData[cellId].type]}</div>`;
                         }
+                        
+                        cell.appendChild(badge);
                     } else {
-                        cell.innerHTML = `<div style="color: #adb5bd;">Empty</div><div class="cell-label">R${r + 1} C${c + 1}</div>`;
+                        cell.innerHTML = `<div style="color: #adb5bd;">Empty</div>`;
                     }
                     
                     // Add drag and drop event listeners
@@ -1123,6 +1196,26 @@
                     updateDraggableUnits();
                     autoSave();
                 }
+            }
+        }
+
+        function toggleCleanStatus(row, col) {
+            const cellId = `${row}-${col}`;
+            if (gridData[cellId]) {
+                const currentStatus = gridData[cellId].cleanStatus || 'unknown';
+                
+                // Cycle through: unknown -> clean -> dirty -> unknown
+                if (currentStatus === 'unknown') {
+                    gridData[cellId].cleanStatus = 'clean';
+                } else if (currentStatus === 'clean') {
+                    gridData[cellId].cleanStatus = 'dirty';
+                } else {
+                    gridData[cellId].cleanStatus = 'unknown';
+                }
+                
+                createGrid();
+                updateDraggableUnits();
+                autoSave();
             }
         }
 
@@ -1312,6 +1405,24 @@
                         width: ${cellSize}px !important;
                         height: ${cellSize}px !important;
                         border: 4px solid #000 !important;
+                        position: relative !important;
+                    }
+                    
+                    /* Add CLEAN stamp area to filled cells */
+                    .cell.filled::after {
+                        content: "CLEAN" !important;
+                        position: absolute !important;
+                        top: 4px !important;
+                        right: 4px !important;
+                        background: white !important;
+                        border: 2px solid #000 !important;
+                        padding: 2px 4px !important;
+                        font-size: 6pt !important;
+                        font-weight: 700 !important;
+                        color: #666 !important;
+                        border-radius: 2px !important;
+                        min-width: 35px !important;
+                        text-align: center !important;
                     }
                     
                     /* Hide empty cell text for cleaner look */
