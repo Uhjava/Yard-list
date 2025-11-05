@@ -91,6 +91,58 @@
             }
         }
 
+        /* Special styling for location selector */
+        .location-selector {
+            background: linear-gradient(135deg, #2d7a4e 0%, #1a4d2e 100%);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #1a4d2e;
+            box-shadow: 0 3px 8px rgba(29, 77, 46, 0.3);
+            flex: 1 1 auto;
+            min-width: 200px;
+        }
+
+        .location-selector label {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .location-selector select {
+            background: white;
+            border: 2px solid #1a4d2e;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a4d2e;
+            cursor: pointer;
+            min-width: 150px;
+            transition: all 0.3s;
+        }
+
+        .location-selector select:hover {
+            border-color: #2d7a4e;
+            box-shadow: 0 0 0 3px rgba(45, 122, 78, 0.2);
+        }
+
+        .location-selector select:focus {
+            outline: none;
+            border-color: #2d7a4e;
+            box-shadow: 0 0 0 3px rgba(45, 122, 78, 0.3);
+        }
+
+        @media (max-width: 767px) {
+            .location-selector {
+                flex: 1 1 100%;
+                padding: 12px 15px;
+            }
+        }
+
         label {
             font-weight: 600;
             color: #555;
@@ -824,11 +876,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚛 Greenlite Trailer Yard Layout Manager</h1>
+        <h1>Greenlite Trailer Yard Layout Manager</h1>
         <p class="subtitle">Organize your production trailers efficiently</p>
 
         <div class="instructions">
-            <h3>📋 How to Use:</h3>
+            <h3>How to Use:</h3>
             <ul>
                 <li>Set your yard dimensions (rows and columns)</li>
                 <li>Select a trailer type from the dropdown</li>
@@ -840,6 +892,14 @@
         </div>
 
         <div class="controls">
+            <div class="control-group location-selector">
+                <label for="yardLocation">Location:</label>
+                <select id="yardLocation" onchange="switchYardLocation()">
+                    <option value="front">Front of Yard</option>
+                    <option value="ranch">Movie Ranch</option>
+                    <option value="davenport">Davenport</option>
+                </select>
+            </div>
             <div class="control-group">
                 <label for="rows">Rows:</label>
                 <input type="number" id="rows" min="1" max="20" value="5">
@@ -880,7 +940,7 @@
         </div>
 
         <div class="unit-list-section">
-            <h3 style="margin-bottom: 10px;">🎯 Drag & Drop Units onto Grid</h3>
+            <h3 style="margin-bottom: 10px;">Drag & Drop Units onto Grid</h3>
             <p style="color: #666; margin-bottom: 15px; font-size: 14px;">Select a trailer type to see available units, then drag them onto the grid cells</p>
             
             <div class="trailer-type-selector">
@@ -905,8 +965,8 @@
         </div>
 
         <div class="export-buttons">
-            <button onclick="saveLayout()">💾 Download Layout File</button>
-            <button onclick="printLayout()">🖨️ Print Layout</button>
+            <button onclick="saveLayout()">Download Layout File</button>
+            <button onclick="printLayout()">Print Layout</button>
         </div>
         
         <div id="saveIndicator" style="position: fixed; bottom: 20px; right: 20px; background: #2d7a4e; color: white; padding: 10px 20px; border-radius: 5px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-weight: 600;">
@@ -942,7 +1002,29 @@
 
     <script>
         let selectedCell = null;
-        let gridData = {};
+        let currentYardLocation = 'front'; // Track which yard we're viewing
+        
+        // Store layouts separately for each location
+        let yardLayouts = {
+            front: {
+                rows: 3,
+                cols: 15,
+                gridData: {}
+            },
+            ranch: {
+                rows: 3,
+                cols: 15,
+                gridData: {}
+            },
+            davenport: {
+                rows: 3,
+                cols: 15,
+                gridData: {}
+            }
+        };
+        
+        // Convenience reference to current location's data
+        let gridData = yardLayouts.front.gridData;
         
         // Organize units by trailer type
         let unitsByType = {
@@ -1217,6 +1299,35 @@
                 updateDraggableUnits();
                 autoSave();
             }
+        }
+
+        function switchYardLocation() {
+            const select = document.getElementById('yardLocation');
+            const newLocation = select.value;
+            
+            // Save current yard's dimensions before switching
+            yardLayouts[currentYardLocation].rows = parseInt(document.getElementById('rows').value);
+            yardLayouts[currentYardLocation].cols = parseInt(document.getElementById('cols').value);
+            
+            // Switch to new location
+            currentYardLocation = newLocation;
+            gridData = yardLayouts[currentYardLocation].gridData;
+            
+            // Load new location's dimensions
+            document.getElementById('rows').value = yardLayouts[currentYardLocation].rows;
+            document.getElementById('cols').value = yardLayouts[currentYardLocation].cols;
+            
+            // Update the display
+            createGrid();
+            updateDraggableUnits();
+            
+            // Visual feedback
+            const locationNames = {
+                'front': 'Front of Yard',
+                'ranch': 'Movie Ranch',
+                'davenport': 'Davenport'
+            };
+            console.log(`Switched to: ${locationNames[newLocation]}`);
         }
 
         function handleDragOver(e) {
@@ -1508,10 +1619,13 @@
 
         // Auto-save to browser storage
         function autoSave() {
+            // Save current location's dimensions
+            yardLayouts[currentYardLocation].rows = parseInt(document.getElementById('rows').value);
+            yardLayouts[currentYardLocation].cols = parseInt(document.getElementById('cols').value);
+            
             const data = {
-                rows: document.getElementById('rows').value,
-                cols: document.getElementById('cols').value,
-                layout: gridData,
+                currentLocation: currentYardLocation,
+                yardLayouts: yardLayouts,
                 unitsByType: unitsByType
             };
             localStorage.setItem('trailerYardLayout', JSON.stringify(data));
@@ -1530,9 +1644,35 @@
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    document.getElementById('rows').value = data.rows || 5;
-                    document.getElementById('cols').value = data.cols || 8;
-                    gridData = data.layout || {};
+                    
+                    // Load yard layouts (new format)
+                    if (data.yardLayouts) {
+                        yardLayouts = data.yardLayouts;
+                        currentYardLocation = data.currentLocation || 'front';
+                        
+                        // Set the dropdown to current location
+                        document.getElementById('yardLocation').value = currentYardLocation;
+                        
+                        // Point gridData to current location
+                        gridData = yardLayouts[currentYardLocation].gridData;
+                        
+                        // Set dimensions for current location
+                        document.getElementById('rows').value = yardLayouts[currentYardLocation].rows || 3;
+                        document.getElementById('cols').value = yardLayouts[currentYardLocation].cols || 15;
+                    } 
+                    // Fallback for old format (single layout)
+                    else if (data.layout) {
+                        // Migrate old data to front yard
+                        yardLayouts.front.gridData = data.layout;
+                        yardLayouts.front.rows = data.rows || 5;
+                        yardLayouts.front.cols = data.cols || 8;
+                        gridData = yardLayouts.front.gridData;
+                        
+                        document.getElementById('rows').value = yardLayouts.front.rows;
+                        document.getElementById('cols').value = yardLayouts.front.cols;
+                    }
+                    
+                    // Load units
                     if (data.unitsByType) {
                         unitsByType = data.unitsByType;
                         // Rebuild flat unitList from unitsByType
